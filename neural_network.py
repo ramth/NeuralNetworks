@@ -1,4 +1,6 @@
 import math
+import numpy as np
+
 
 class Activation:
     """Activation functions and their derivatives for backpropagation"""
@@ -10,11 +12,101 @@ class Activation:
 
     @staticmethod
     def tanh():
-        activation_func = lambda x : (math.exp(x) - math.exp(-x)) / (math.exp(x) + math.exp(-x))
-        d_activation_func = lambda x : 4 / (math.exp(x) + math.exp(-x))**2
+        activation_func = lambda x : (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
+        d_activation_func = lambda x : 4 / (np.exp(x) + np.exp(-x))**2
         return (activation_func, d_activation_func)
 
+class Error:
+    @staticmethod
+    def quadratic():
+         error_func = lambda x : x**2
+         d_error_func = lambda x : 2*x
+         return (error_func, d_error_func)
 
+#Matrix based approach
+def create_MNIST_network():
+    """
+    Inputs are 28*28 and output is a 1*10 
+    """
+    layers = [784, 200, 50, 10]
+
+class NeuralNetwork:
+
+    def __init__(self,layer_dims,activation_func,diff_func,error_func):
+        self.learning_rate = 0.01
+        self.network = []
+        #Zip to form pairs of dimensions corresponding to dims of weight matrices
+        layers_weight_dimensions = list(zip(layer_dims[:-1],layer_dims[2:]))
+        for weight_dim in layers_weight_dimensions:
+            W_i = np.random.rand(weight_dim[0],weight_dim[1])
+            self.network.append(W_i)
+            
+
+    def set_activation_func(self,activation_func, d_activation_func):
+        self.activation_func = activation_func
+        self.d_activation_func = d_activation_func
+    
+    def set_error_func(self,error_func, d_error_func):
+        self.error_func = error_func
+        self.d_error_func = d_error_func
+
+    def train(self,input,output):
+        """ Train network on a sample """
+        layer_n = len(self.network)
+
+        #Forward pass
+        self.outputs_pre_activation = []
+        self.outputs = []
+        output_i = input
+        #TODO probably incorrect intialization
+        self.outputs_pre_activation.append(input)
+        self.outputs.append(input)
+
+        for layer_i in range(0,layer_n):
+            #get next output 
+            output_i = np.dot(self.network[layer_i],output_i)
+            self.outputs_pre_activation.append(output_i)
+            output_i = self.activation_func(output_i)
+            self.outputs.append(output_i)
+
+        #Backward propagation to compute derivatives
+        computed_output = self.outputs[-1]
+        error_derv = sum(2*(computed_output - output))
+        self.network_d = []
+
+        #initialize
+        output_vec = self.outputs_pre_activation[-1]
+        dE_dOi = error_derv*self.d_activation_func(output_vec)
+
+        #Start from rightmost layer
+        for layer_i in reversed(range(0,layer_n)):
+            weight_mat = self.network[layer_i]
+            output_vec = self.outputs_pre_activation[layer_i]
+            input_vec = self.outputs[layer_i-1]
+
+            #error derivative w.r.t to output vector before tanh
+            #values before tanh needed
+
+            #TODO what about earlier layers?
+            
+            dE_dWij = np.outer(dE_dOi, input_vec)
+            
+            #Weight updates !
+            weight_mat += dE_dWij*self.learning_rate
+
+            self.network[layer_i]
+            
+        #Gradient Descent 
+
+
+    def update(self,input,desired_output):
+        pass
+    def test(self,input,output):
+        """ Returns error of an input evaluated on this network """
+        pass
+
+
+#Old approach
 class InputNeuron:
     """ Input Neuron that only outputs a constant value """
     def __init__(self, input):
